@@ -1,0 +1,17 @@
+{
+	"main": "index.html",
+	"logo": "logo.png",
+	"preload": "index.js",
+	"features": [
+		{
+			"code": "hello",
+			"explain": "hello world!",
+			"cmds": [
+				"it",
+				"text",
+				"copy",
+				"cp"
+			]
+		}
+	]
+}

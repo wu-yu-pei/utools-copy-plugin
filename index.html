@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    padding: 0 10px;
+  }
+  li {
+    list-style: none;
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    /* 超出五行 显示省略号 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+  }
+  li:hover {
+    background-color: #ffc;
+  }
+  .copy-info {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -10%);
+    transition: all linear 0.5s;
+    opacity: 0;
+    padding: 5px 10px;
+    background-color: #ffc;
+    border-radius: 5px;
+  }
+
+  .active {
+    opacity: 1;
+  }
+</style>
+<html>
+  <body>
+    <ul class="editor">
+      <li>aaa</li>
+    </ul>
+    <div class="copy-info">复制成功</div>
+    <script>
+      const date = [];
+      const copyInfo = document.querySelector('.copy-info');
+      const ul = document.querySelector('ul');
+      utools.onPluginEnter(() => {
+        const res = localStorage.getItem('date') && JSON.parse(localStorage.getItem('date'));
+        if (res) {
+          for (let i = 0; i < res.length; i++) {
+            const li = document.createElement('li');
+            li.innerText = res[i].data;
+            ul.appendChild(li);
+            li.addEventListener('click', () => {
+              copyText(li.innerText);
+              copyInfo.className = 'copy-info active';
+              setTimeout(() => {
+                copyInfo.className = 'copy-info';
+              }, 1000);
+            });
+          }
+          date = res;
+        }
+      });
+
+      setInterval(async () => {
+        let text;
+        try {
+          text = await pasteText();
+        } catch (error) {
+          console.log(error);
+          ul.innerHTML = error;
+        }
+
+        if (text == '') return;
+        const isHas = !!date.find((item) => item.data == text);
+        if (!isHas) {
+          date.unshift({
+            type: 'text',
+            data: text,
+            time: +new Date(),
+          });
+          localStorage.setItem('date', JSON.stringify(date));
+          const li = document.createElement('li');
+          li.innerText = text;
+          ul.insertBefore(li, ul.childNodes[0]);
+          li.addEventListener('click', () => {
+            copyText(li.innerText);
+            copyInfo.className = 'copy-info active';
+            setTimeout(() => {
+              copyInfo.className = 'copy-info';
+            }, 1000);
+          });
+        }
+      }, 1000);
+    </script>
+    <script>
+      utools.onPluginEnter(({ code, type, payload, option }) => {
+        utools.screenCapture((base64Str) => {
+          // 方法1. 调用现有utolls插件(缺点 多一步点击复制操作)
+          utools.redirect('OCR 文字识别', { type: 'img', data: base64Str });
+
+          // 方法2. 发送网络请求 进行ocr识别 识别完之后 直接调用 复制事件 复制到黏贴版 直接就可以使用了。
+        });
+      });
+    </script>
+  </body>
+</html>
